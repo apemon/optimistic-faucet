@@ -4,6 +4,7 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.3/css/bulma.min.css">
+        <script defer src="https://use.fontawesome.com/releases/v5.3.1/js/all.js"></script>
         <script src="https://cdn.ethers.io/lib/ethers-5.2.umd.min.js"
         type="application/javascript"></script>
         <script>
@@ -95,11 +96,15 @@
             async function request() {
                 var address = document.getElementById('input_address').value;
                 var response = await fetch(faucet_url + address)
-                console.log(response)
                 if(!response.ok) {
-                    var request_error_elm = document.getElementById('request_error')
+                    var request_status_elm = document.getElementById('request_status')
                     var err = await response.text()
-                    request_error_elm.textContent = err
+                    request_status_elm.className = 'has-text-danger'
+                    request_status_elm.textContent = err
+                } else {
+                    var request_status_elm = document.getElementById('request_status')
+                    request_status_elm.className = 'has-text-success'
+                    request_status_elm.textContent = 'success'
                 }
             }
 
@@ -156,7 +161,14 @@
                     </div>
                 </div>
                 <button class="button is-primary" onclick="request()">Request 0.01 ethers per 24 hours</button>
-                <p id="request_error" class="has-text-danger"></p>
+                <p id="request_status"></p>
+            </div>
+            <div class="box">
+                <a href="https://github.com/apemon/optimistic-faucet">
+                    <span class="icon">
+                        <i class="fab fa-github"></i>
+                    </span>
+                </a>
             </div>
         </section>
     </body>
