@@ -1,0 +1,6 @@
+artifacts
+artifacts-ovm
+cache
+cache-ovm
+node_modules
+.env

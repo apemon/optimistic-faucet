@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.3/css/bulma.min.css">
+        <script src="https://cdn.ethers.io/lib/ethers-5.2.umd.min.js"
+        type="application/javascript"></script>
+        <script>
+            var contract_address = '0x85d6dd83eDAA2511681dc592A0Ae9CECF8e061C8';
+            var eth_address = '0x4200000000000000000000000000000000000006';
+            var faucet_url = 'https://kong.ferris-chan.work/kovan-optimistic/faucet/request/';
+            var provider;
+            var signer;
+            var eth;
+            var erc20_abi;
+            window.addEventListener('load', async () => {
+                var faucet_address_elm = document.getElementById('faucet_address');
+                faucet_address_elm.textContent = "Faucet Address: " + contract_address;
+                // load abi
+                const abi_response = await fetch('IERC20.json')
+                erc20_abi = await abi_response.json()
+                reloadApp()
+            });
+            
+            if(window.ethereum) {
+                window.ethereum.on('accountsChanged', async () => {
+                    await reloadApp()
+                })
+                window.ethereum.on('chainChanged', async () => {
+                    await reloadApp()
+                })
+            }
+
+            async function reloadApp() {
+                // load ether.js
+                if(window.ethereum) {
+                    try {
+                        await window.ethereum.request({
+                            method: 'eth_requestAccounts'
+                        })
+                        await window.ethereum.request({
+                            method: 'wallet_addEthereumChain',
+                            params: [
+                                {
+                                    chainId: '0x45',
+                                    rpcUrls: ['https://kovan.optimism.io'],
+                                    blockExplorerUrls: ['https://kovan-optimistic.etherscan.io'],
+                                    chainName: 'Optimistic - Kovan'
+                                },
+                            ],
+                        });
+                        await window.ethereum.request({
+                            method: 'wallet_switchEthereumChain',
+                            params: [{
+                                chainId: '0x45'
+                            }]
+                        })
+                        provider = new ethers.providers.Web3Provider(window.ethereum)
+                        signer = provider.getSigner()
+                        const { chainId } = await provider.getNetwork()
+                        if (chainId != 69) {
+                            var network_error_elm = document.getElementById('network_error');
+                            network_error_elm.textContent = "Please switch to Kovan Optimistic Network"
+                            // hide element all
+                            hideAll()
+                        } else {
+                            var address = await signer.getAddress()
+                            var balance = await provider.getBalance(address)
+                            var faucet_balance = await provider.getBalance(contract_address)
+                            var address_elm = document.getElementById('address');
+                            address_elm.textContent = "Your Address: " + address;
+                            var balance_elm = document.getElementById('balance');
+                            balance_elm.textContent = "Balance: " + ethers.utils.formatEther(balance) + ' ether';
+                            var faucet_balance_elm = document.getElementById('faucet_balance');
+                            faucet_balance_elm.textContent = "Balance: " + ethers.utils.formatEther(faucet_balance) + ' ether'; 
+                            var input_address_elm = document.getElementById('input_address')
+                            input_address_elm.value = address
+                            eth = new ethers.Contract(eth_address, erc20_abi.abi).connect(signer);
+                            // show element all
+                            showAll()
+                            // hide error message
+                            var network_error_elm = document.getElementById('network_error');
+                            network_error_elm.style.display = 'none';
+                        }
+                    } catch (err) {
+                        hideAll()
+                        var network_error_elm = document.getElementById('network_error');
+                        network_error_elm.textContent = "Please connect to metamask"
+                        network_error_elm.style.display = ''
+                    }
+                }
+            }
+
+            async function request() {
+                var address = document.getElementById('input_address').value;
+                var response = await fetch(faucet_url + address)
+                console.log(response)
+                if(!response.ok) {
+                    var request_error_elm = document.getElementById('request_error')
+                    var err = await response.text()
+                    request_error_elm.textContent = err
+                }
+            }
+
+            async function donate(amount) {
+                if(!eth) 
+                    return; //do nothing
+                const donate_response = await eth.transfer(contract_address, ethers.utils.parseEther(amount.toString()));
+                if (!donate_response.ok) {
+                    var donate_error_elm = document.getElementById('donate_error')
+                    var err = await response.text()
+                    donate_error_elm.textContent = err
+                }
+            }
+
+            function hideAll() {
+                var faucet_box_elm = document.getElementById('faucet_box')
+                faucet_box_elm.style.display = 'none'
+                var donate_1_elm = document.getElementById('donate_1')
+                donate_1_elm.style.display = 'none'
+                var donate_2_elm = document.getElementById('donate_2')
+                donate_2_elm.style.display = 'none'
+            }
+
+            function showAll() {
+                var faucet_box_elm = document.getElementById('faucet_box')
+                faucet_box_elm.style.display = ''
+                var donate_1_elm = document.getElementById('donate_1')
+                donate_1_elm.style.display = ''
+                var donate_2_elm = document.getElementById('donate_2')
+                donate_2_elm.style.display = ''
+            }
+        </script>
+    </head>
+    <body>
+        <section class="container">
+            <div class="box">
+                <div class="content is-normal">
+                    <h1>Kovan Optimistic Faucet</h1>
+                    <p id="network_error" class="has-text-danger"></p>
+                    <h4 id="faucet_address"></h4>
+                    <h4 id="faucet_balance"></h4>
+                    <h4 id="address"></h4>
+                    <h4 id="balance"></h4>
+                    <button id="donate_1" class="button is-info" onclick="donate(0.1)">Donate 0.1 ether to faucet</button>
+                    <button id="donate_2" class="button is-primary" onclick="donate(1)">Donate 1 ether to faucet</button>
+                    <p id="donate_error" class="has-text-danger"></p>
+                </div>
+            </div>
+            <div class="box" id="faucet_box">
+                <div class="field">
+                    <label class="label">Address:</label>
+                    <div class="control">
+                        <input class="input" type="text" placeholder="0x" id="input_address">
+                    </div>
+                </div>
+                <button class="button is-primary" onclick="request()">Request 0.01 ethers per 24 hours</button>
+                <p id="request_error" class="has-text-danger"></p>
+            </div>
+        </section>
+    </body>
+</html>

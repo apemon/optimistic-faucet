@@ -1,0 +1,17 @@
+{
+  "name": "kovan-optimistic-faucet",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^10.0.0",
+    "ethers": "^5.4.3",
+    "express": "^4.17.1"
+  }
+}
